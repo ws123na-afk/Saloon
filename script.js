@@ -6,40 +6,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Preloader ---
     const preloader = document.getElementById('preloader');
-    window.addEventListener('load', () => {
-        setTimeout(() => preloader.classList.add('hidden'), 600);
-    });
-    setTimeout(() => preloader.classList.add('hidden'), 2200);
+    if (preloader) {
+        window.addEventListener('load', () => {
+            setTimeout(() => preloader.classList.add('hidden'), 600);
+        });
+        setTimeout(() => preloader.classList.add('hidden'), 2200);
+    }
 
     // --- Navbar ---
     const navbar = document.getElementById('navbar');
-    window.addEventListener('scroll', () => {
-        navbar.classList.toggle('scrolled', window.scrollY > 60);
-    });
+    if (navbar) {
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('scrolled', window.scrollY > 60);
+        });
+    }
 
     // --- Mobile Nav ---
     const navToggle = document.getElementById('navToggle');
     const navLinks = document.getElementById('navLinks');
 
-    navToggle.addEventListener('click', () => {
-        navToggle.classList.toggle('active');
-        navLinks.classList.toggle('open');
-        document.body.style.overflow = navLinks.classList.contains('open') ? 'hidden' : '';
-    });
-
-    navLinks.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', () => {
-            navToggle.classList.remove('active');
-            navLinks.classList.remove('open');
-            document.body.style.overflow = '';
+    if (navToggle && navLinks) {
+        navToggle.addEventListener('click', () => {
+            navToggle.classList.toggle('active');
+            navLinks.classList.toggle('open');
+            navToggle.setAttribute('aria-expanded', navLinks.classList.contains('open') ? 'true' : 'false');
+            document.body.style.overflow = navLinks.classList.contains('open') ? 'hidden' : '';
         });
-    });
+
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navToggle.classList.remove('active');
+                navLinks.classList.remove('open');
+                navToggle.setAttribute('aria-expanded', 'false');
+                document.body.style.overflow = '';
+            });
+        });
+    }
 
     // --- Smooth Scroll ---
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', (e) => {
+            const href = anchor.getAttribute('href');
+            if (!href || href === '#') return;
+
             e.preventDefault();
-            const target = document.querySelector(anchor.getAttribute('href'));
+            const target = document.querySelector(href);
             if (target) {
                 const offset = 80;
                 window.scrollTo({
@@ -108,68 +119,75 @@ document.addEventListener('DOMContentLoaded', () => {
     let current = 0;
     let autoTimer;
 
-    reviews.forEach((_, i) => {
-        const dot = document.createElement('button');
-        dot.classList.add('review-dot');
-        if (i === 0) dot.classList.add('active');
-        dot.setAttribute('aria-label', `Review ${i + 1}`);
-        dot.addEventListener('click', () => goTo(i));
-        dotsBox.appendChild(dot);
-    });
+    if (reviews.length && dotsBox && prevBtn && nextBtn) {
+        reviews.forEach((_, i) => {
+            const dot = document.createElement('button');
+            dot.classList.add('review-dot');
+            if (i === 0) dot.classList.add('active');
+            dot.setAttribute('aria-label', `Review ${i + 1}`);
+            dot.addEventListener('click', () => goTo(i));
+            dotsBox.appendChild(dot);
+        });
 
-    function goTo(idx) {
-        reviews[current].classList.remove('active');
-        dotsBox.children[current].classList.remove('active');
-        current = (idx + reviews.length) % reviews.length;
-        reviews[current].classList.add('active');
-        dotsBox.children[current].classList.add('active');
+        function goTo(idx) {
+            reviews[current].classList.remove('active');
+            dotsBox.children[current].classList.remove('active');
+            current = (idx + reviews.length) % reviews.length;
+            reviews[current].classList.add('active');
+            dotsBox.children[current].classList.add('active');
+            resetAuto();
+        }
+
+        function resetAuto() {
+            clearInterval(autoTimer);
+            autoTimer = setInterval(() => goTo(current + 1), 5000);
+        }
+
+        prevBtn.addEventListener('click', () => goTo(current - 1));
+        nextBtn.addEventListener('click', () => goTo(current + 1));
         resetAuto();
     }
 
-    function resetAuto() {
-        clearInterval(autoTimer);
-        autoTimer = setInterval(() => goTo(current + 1), 5000);
-    }
-
-    prevBtn.addEventListener('click', () => goTo(current - 1));
-    nextBtn.addEventListener('click', () => goTo(current + 1));
-    resetAuto();
-
     // --- Booking Form ---
     const form = document.getElementById('bookingForm');
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const btn = form.querySelector('button[type="submit"]');
-        const orig = btn.textContent;
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = form.querySelector('button[type="submit"]');
+            if (!btn) return;
+            const orig = btn.textContent;
 
-        btn.textContent = 'Booking Confirmed!';
-        btn.style.background = 'var(--sage)';
-        btn.disabled = true;
+            btn.textContent = 'Booking Confirmed!';
+            btn.style.background = 'var(--sage)';
+            btn.disabled = true;
 
-        setTimeout(() => {
-            btn.textContent = orig;
-            btn.style.background = '';
-            btn.disabled = false;
-            form.reset();
-        }, 3000);
-    });
+            setTimeout(() => {
+                btn.textContent = orig;
+                btn.style.background = '';
+                btn.disabled = false;
+                form.reset();
+            }, 3000);
+        });
+    }
 
     // --- Active Nav on Scroll ---
     const sections = document.querySelectorAll('section[id]');
-    window.addEventListener('scroll', () => {
-        const pos = window.scrollY + 120;
-        sections.forEach(sec => {
-            const top = sec.offsetTop;
-            const h = sec.offsetHeight;
-            const id = sec.getAttribute('id');
-            if (pos >= top && pos < top + h) {
-                navLinks.querySelectorAll('a').forEach(a => {
-                    a.classList.remove('active');
-                    if (a.getAttribute('href') === `#${id}`) a.classList.add('active');
-                });
-            }
+    if (navLinks && sections.length) {
+        window.addEventListener('scroll', () => {
+            const pos = window.scrollY + 120;
+            sections.forEach(sec => {
+                const top = sec.offsetTop;
+                const h = sec.offsetHeight;
+                const id = sec.getAttribute('id');
+                if (pos >= top && pos < top + h) {
+                    navLinks.querySelectorAll('a').forEach(a => {
+                        a.classList.remove('active');
+                        if (a.getAttribute('href') === `#${id}`) a.classList.add('active');
+                    });
+                }
+            });
         });
-    });
+    }
 
     // --- Hero Parallax ---
     const heroContent = document.querySelector('.hero-content');
